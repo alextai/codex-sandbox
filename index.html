@@ -75,10 +75,38 @@
       if (!countdownEl) {
         console.warn('Countdown element missing from the page.');
       } else {
-        const totalMilliseconds = 5 * 24 * 60 * 60 * 1000;
-        const targetTime = Date.now() + totalMilliseconds;
-        let lastRenderedSecond = -1;
+        const STORAGE_KEY = 'codex-countdown-target';
+        const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
 
+        const getStoredTarget = () => {
+          try {
+            const rawValue = localStorage.getItem(STORAGE_KEY);
+            if (!rawValue) return null;
+            const parsedValue = Number(rawValue);
+            return Number.isFinite(parsedValue) ? parsedValue : null;
+          } catch (error) {
+            console.warn('Unable to access localStorage for countdown persistence.', error);
+            return null;
+          }
+        };
+
+        const setStoredTarget = value => {
+          try {
+            localStorage.setItem(STORAGE_KEY, String(value));
+          } catch (error) {
+            console.warn('Unable to store countdown target time.', error);
+          }
+        };
+
+        const now = Date.now();
+        let targetTime = getStoredTarget();
+
+        if (!targetTime || targetTime <= now) {
+          targetTime = now + FIVE_DAYS_MS;
+          setStoredTarget(targetTime);
+        }
+
+        let lastRenderedSecond = -1;
         const pad = value => String(value).padStart(2, '0');
 
         const renderCountdown = remainingMs => {
@@ -91,23 +119,35 @@
           countdownEl.textContent = `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         };
 
-        renderCountdown(targetTime - Date.now());
-        lastRenderedSecond = Math.floor((targetTime - Date.now()) / 1000);
+        const updateDisplay = () => {
+          const remaining = Math.max(targetTime - Date.now(), 0);
+          const wholeSeconds = Math.floor(remaining / 1000);
+          if (wholeSeconds !== lastRenderedSecond) {
+            lastRenderedSecond = wholeSeconds;
+            renderCountdown(remaining);
+          }
+        };
 
-        createTimer({
-          duration: totalMilliseconds,
-          autoplay: true,
-          onBegin: () => renderCountdown(targetTime - Date.now()),
-          onUpdate: timer => {
-            const remaining = Math.max(targetTime - Date.now(), 0);
-            const wholeSeconds = Math.floor(remaining / 1000);
-            if (wholeSeconds !== lastRenderedSecond) {
-              lastRenderedSecond = wholeSeconds;
-              renderCountdown(remaining);
-            }
-          },
-          onComplete: () => renderCountdown(0),
-        });
+        const remainingDuration = Math.max(targetTime - Date.now(), 0);
+        renderCountdown(remainingDuration);
+        lastRenderedSecond = Math.floor(remainingDuration / 1000);
+
+        if (remainingDuration > 0) {
+          createTimer({
+            duration: remainingDuration,
+            autoplay: true,
+            onBegin: updateDisplay,
+            onUpdate: updateDisplay,
+            onComplete: () => {
+              renderCountdown(0);
+              try {
+                localStorage.removeItem(STORAGE_KEY);
+              } catch (error) {
+                console.warn('Unable to clear stored countdown target.', error);
+              }
+            },
+          });
+        }
       }
     </script>
   </body>
