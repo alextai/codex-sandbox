@@ -66,6 +66,7 @@
     <main>
       <div class="countdown" aria-live="polite">00:00:00:00</div>
       <p class="countdown-label">Time until launch</p>
+      <a class="about-link" href="about.html">About Project</a>
     </main>
 
     <script type="module">
@@ -150,5 +151,30 @@
         }
       }
     </script>
+    <style>
+      .about-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: inherit;
+        text-decoration: none;
+        letter-spacing: 0.18em;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        transition: background-color 180ms ease, color 180ms ease,
+          border-color 180ms ease;
+        backdrop-filter: blur(4px);
+      }
+
+      .about-link:hover,
+      .about-link:focus-visible {
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.6);
+        outline: none;
+      }
+    </style>
   </body>
 </html>
